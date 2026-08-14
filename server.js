@@ -766,7 +766,7 @@ async function showWelcome(to) {
 
 We are happy to serve you.
 
-Enjoy delicious local food from Stoney Shop.
+Enjoy delicious local food from Juljones Food.
 
 🍚 Fried Rice
 🍚 Jollof Rice
