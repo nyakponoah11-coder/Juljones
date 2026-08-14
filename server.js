@@ -14,7 +14,7 @@ const {
   WHATSAPP_PHONE_NUMBER_ID,
   WHATSAPP_VERIFY_TOKEN,
 
-  ABeka_BRANCH_NUMBER,
+  ABEKA_BRANCH_NUMBER,
   LAPAZ_BRANCH_NUMBER,
   GCTU_BRANCH_NUMBER,
   EAST_LEGON_BRANCH_NUMBER,
@@ -43,7 +43,7 @@ const WA_URL =
 
 const BRANCHES = {
   "Abeka": {
-    number: ABeka_BRANCH_NUMBER
+    number: ABEKA_BRANCH_NUMBER
   },
 
   "Lapaz": {
@@ -426,13 +426,13 @@ function foodRows() {
     {
       id: "food_banku",
       title: "Banku",
-      description: "Choose ₵10 - ₵100"
+      description: "Choose ₵5 - ₵50"
     },
 
     {
       id: "food_kokonte",
       title: "Kokonte",
-      description: "Choose ₵10 - ₵100"
+      description: "Choose ₵5 - ₵50"
     }
   ];
 }
@@ -504,7 +504,7 @@ function proteinRows() {
 
     {
       id: "protein_egg",
-      title: "Egg — ₵4",
+      title: "Egg — ₵5",
       description: "Add egg"
     }
   ];
@@ -594,23 +594,14 @@ function buildOrderSummary(session) {
 
   return `🛍️ *${STORE_NAME.toUpperCase()} ORDER*
 
-📍 Branch:
-${session.branch}
-
-🍽️ Food:
-${session.food}
-
-💰 Food amount:
-${money(basePrice)}
-
-${proteinSummary(session)}
+📍 Branch: ${session.branch}
+🍽️ Food: ${session.food}
+💰 Food amount: ${money(basePrice)} ${proteinSummary(session)}
 
 ━━━━━━━━━━━━━━
 
 💵 *TOTAL: ${money(calculateTotal(session))}*
-
-🚚 Method:
-${
+🚚 Method: ${
   session.fulfillment === "pickup"
     ? "Pick Up"
     : "Delivery — Pay on Delivery"
@@ -680,31 +671,18 @@ async function sendOrderToBranch(order) {
     return false;
   }
 
-  const message = `🔔 *NEW STONEY SHOP ORDER*
+  const message = `🔔 *NEW ORDER*
 
-🆔 Order:
-${order.id}
-
-📍 Branch:
-${order.branch}
-
-📱 Customer:
-${order.customerPhone}
-
-🍽️ Food:
-${order.food}
-
-💰 Food:
-${money(order.basePrice)}
-
-${order.proteinSummary}
+🆔 Order: ${order.id}
+📍 Branch: ${order.branch}
+📱 Customer: ${order.customerPhone}
+🍽️ Food: ${order.food}
+💰 Food: ${money(order.basePrice)} ${order.proteinSummary}
 
 ━━━━━━━━━━━━━━
 
 💵 *TOTAL: ${money(order.total)}*
-
-🚚 Method:
-${
+🚚 Method: ${
   order.fulfillment === "pickup"
     ? "PICK UP"
     : "DELIVERY — PAY ON DELIVERY"
@@ -781,7 +759,7 @@ Enjoy delicious local food from Juljones Food.
   return sendInteractiveList(
     to,
 
-    "📍 Which Stoney Shop branch would you like to order from?",
+    "📍 Which Juljones branch would you like to order from?",
 
     "Branches",
 
@@ -1360,22 +1338,11 @@ Please try again later or send *hi* to restart.`
 
     `🎉 *ORDER PLACED SUCCESSFULLY!*
 
-🆔 Order:
-${order.id}
-
-📍 Branch:
-${order.branch}
-
-🍽️ Food:
-${order.food}
-
-${order.proteinSummary}
-
-💵 Total:
-${money(order.total)}
-
-🚚 Method:
-${
+🆔 Order: ${order.id}
+📍 Branch: ${order.branch}
+🍽️ Food: ${order.food} ${order.proteinSummary}
+💵 Total:${money(order.total)}
+🚚 Method:${
   order.fulfillment === "pickup"
     ? "Pick Up"
     : "Delivery — Pay on Delivery"
@@ -1440,9 +1407,7 @@ async function handleStaffAction(
       `👨‍🍳 *YOUR ORDER IS BEING PREPARED*
 
 🆔 ${order.id}
-
 🍽️ ${order.food}
-
 📍 ${order.branch}
 
 Your food is now being prepared.
@@ -1472,12 +1437,8 @@ We'll notify you when it is ready. ❤️`
 
         `🎉 *YOUR FOOD IS READY!*
 
-🆔 Order:
-${order.id}
-
-📍 Branch:
-${order.branch}
-
+🆔 Order: ${order.id}
+📍 Branch: ${order.branch}
 🍽️ ${order.food}
 
 Your food is ready for pickup. 🍛
@@ -1494,10 +1455,7 @@ Thank you for ordering from ${STORE_NAME}! ❤️`
 
 🆔 Order:
 ${order.id}
-
-📍 Branch:
-${order.branch}
-
+📍 Branch: ${order.branch}
 🍽️ ${order.food}
 
 Your food has been prepared and is ready for delivery.
@@ -1560,9 +1518,7 @@ Your food has been prepared and is ready for delivery.
 
 🆔 Order:
 ${order.id}
-
-📍 Branch:
-${order.branch}
+📍 Branch: ${order.branch}
 
 Your food is on the way.
 
@@ -1833,7 +1789,7 @@ app.get(
         STORE_NAME,
 
       service:
-        "Stoney Shop Food Ordering Bot"
+        "Juljones Food Ordering Bot"
     });
   }
 );
