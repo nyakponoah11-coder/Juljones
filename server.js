@@ -122,7 +122,7 @@ const RICE_PORTIONS = [
 
 const LOCAL_FOOD_AMOUNTS = [];
 
-for (let amount = 10; amount <= 100; amount += 10) {
+for (let amount = 5; amount <= 50; amount += 5) {
   LOCAL_FOOD_AMOUNTS.push(amount);
 }
 
@@ -677,7 +677,8 @@ async function sendOrderToBranch(order) {
 📍 Branch: ${order.branch}
 📱 Customer: ${order.customerPhone}
 🍽️ Food: ${order.food}
-💰 Food: ${money(order.basePrice)} ${order.proteinSummary}
+💰 Food: ${money(order.basePrice)}
+${order.proteinSummary}
 
 ━━━━━━━━━━━━━━
 
@@ -1340,7 +1341,8 @@ Please try again later or send *hi* to restart.`
 
 🆔 Order: ${order.id}
 📍 Branch: ${order.branch}
-🍽️ Food: ${order.food} ${order.proteinSummary}
+🍽️ Food: ${order.food} 
+${order.proteinSummary}
 💵 Total:${money(order.total)}
 🚚 Method:${
   order.fulfillment === "pickup"
