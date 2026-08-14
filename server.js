@@ -21,7 +21,7 @@ const {
   UPSA_BRANCH_NUMBER,
   MADINA_BRANCH_NUMBER,
 
-  STORE_NAME = "Stoney Shop"
+  STORE_NAME = "Juljones Food"
 } = process.env;
 
 const GRAPH_VERSION = process.env.GRAPH_VERSION || "v23.0";
