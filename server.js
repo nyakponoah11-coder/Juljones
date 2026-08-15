@@ -86,22 +86,22 @@ const BRANCHES = {
 const RICE_PORTIONS = [
   {
     id: "rice_20",
-    amount: 20,
-    chicken: 1
-  },
-  {
-    id: "rice_25",
     amount: 25,
     chicken: 1
   },
   {
-    id: "rice_30",
+    id: "rice_25",
     amount: 30,
     chicken: 1
   },
   {
-    id: "rice_40",
+    id: "rice_30",
     amount: 40,
+    chicken: 1
+  },
+  {
+    id: "rice_40",
+    amount: 45,
     chicken: 1
   },
   {
@@ -408,13 +408,13 @@ function foodRows() {
     {
       id: "food_fried_rice",
       title: "Fried Rice",
-      description: "₵20 - ₵50"
+      description: "₵25 - ₵50"
     },
 
     {
       id: "food_jollof",
       title: "Jollof Rice",
-      description: "₵20 - ₵50"
+      description: "₵25 - ₵50"
     },
 
     {
