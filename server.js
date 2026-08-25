@@ -671,10 +671,13 @@ We are happy to serve you.
 Enjoy delicious local food from Juljones Food.
 
 🍚 Fried Rice
+🍚 Waakye
 🍚 Jollof Rice
 🍲 Fufu
 🍲 Banku
 🍲 Kokonte
+🍚 Rice balls
+🥛 Mashke
 
 📍 First, choose the branch closest to you.`;
 
