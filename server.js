@@ -383,6 +383,25 @@ function foodRows() {
       title: "Kokonte",
       description: "Choose ₵5 - ₵50"
     }
+
+    {
+      id: "food_banku",
+      title: "Banku",
+      description: "Choose ₵5 - ₵50"
+    },
+
+    {
+      id: "food_waakye",
+      title: "Waakye",
+      description: "Choose ₵25 - ₵50"
+    },
+
+    {
+      id: "food_banku",
+      title: "Rice ball",
+      description: "Choose ₵5 - ₵50"
+    },
+
   ];
 }
 
@@ -823,6 +842,18 @@ async function handleCustomerInteractive(
 
     if (id === "food_kokonte") {
       food = "Kokonte";
+    }
+
+     if (id === "food_waakye") {
+      food = "Waakye";
+    }
+
+     if (id === "food_rice balls") {
+      food = "Rice balls";
+    }
+
+     if (id === "food_drink") {
+      food = "Mashke";
     }
 
     if (!food) return;
