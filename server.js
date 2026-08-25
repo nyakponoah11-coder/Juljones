@@ -327,7 +327,7 @@ function generateOrderId() {
 
   const rand = Math.floor(Math.random() * 900 + 100);
 
-  return `STN-${date}-${time}`;
+  return `STN-${date}-${time}-${rand}`;
 }
 
 /*--------------------------------------------------------------------------
