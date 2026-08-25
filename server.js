@@ -310,7 +310,24 @@ function proteinSummary(session) {
  ORDER ID
 --------------------------------------------------------------------------*/
 function generateOrderId() {
-  return "STN-" + Date.now().toString(36).toUpperCase() + "-" + Math.floor(Math.random() * 900 + 100);
+  const now = new Date();
+
+  const date = now.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  }).replace(/\//g, "-");
+
+  const time = now.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).replace(/:/g, "");
+
+  const rand = Math.floor(Math.random() * 900 + 100);
+
+  return `STN-${date}-${time}`;
 }
 
 /*--------------------------------------------------------------------------
