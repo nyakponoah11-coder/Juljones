@@ -708,7 +708,7 @@ async function handleText(from, text) {
       "menu"
     ].includes(lower)
   ) {
-    resetSession(from);SE
+    resetSession(from);
     return showWelcome(from);
   }
 
