@@ -28,7 +28,7 @@ The bot currently supports:
 3. Tabora
 4. East Legon
 5. UPSA
-6. Madina
+6. Race
 
 Each branch has a different WhatsApp number.
 

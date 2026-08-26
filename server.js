@@ -18,7 +18,7 @@ const {
   TOBORA_BRANCH_NUMBER,
   EAST_LEGON_BRANCH_NUMBER,
   UPSA_BRANCH_NUMBER,
-  MADINA_BRANCH_NUMBER,
+  RACE_COARSE_BRANCH_NUMBER,
 
   STORE_NAME = "Juljones Food"
 } = process.env;
@@ -37,7 +37,7 @@ const BRANCHES = {
   "Tobora": { number: TOBORA_BRANCH_NUMBER },
   "East Legon": { number: EAST_LEGON_BRANCH_NUMBER },
   "UPSA": { number: UPSA_BRANCH_NUMBER },
-  "Madina": { number: MADINA_BRANCH_NUMBER }
+  "Race Course": { number: RACE_COARSE_BRANCH_NUMBER }
 };
 
 /*--------------------------------------------------------------------------
