@@ -46,11 +46,19 @@ const BRANCHES = {
 const RICE_AMOUNTS = [25, 30, 40, 45, 50];
 
 /*--------------------------------------------------------------------------
- FUFU / BANKU / KOKONTE / RICE BALL — base food amount
+ BANKU / KOKONTE / RICE BALL — base food amount (₵5 - ₵50)
 --------------------------------------------------------------------------*/
 const LOCAL_FOOD_AMOUNTS = [];
 for (let amount = 5; amount <= 50; amount += 5) {
   LOCAL_FOOD_AMOUNTS.push(amount);
+}
+
+/*--------------------------------------------------------------------------
+ FUFU — base food amount (₵10 - ₵50)
+--------------------------------------------------------------------------*/
+const FUFU_AMOUNTS = [];
+for (let amount = 10; amount <= 50; amount += 5) {
+  FUFU_AMOUNTS.push(amount);
 }
 
 /*--------------------------------------------------------------------------
@@ -257,11 +265,11 @@ function getBranchFromId(id) {
 --------------------------------------------------------------------------*/
 function foodRows() {
   return [
-    { id: "food_fried_rice", title: "Fried Rice",  description: "₵25 - ₵50 · Plain, no protein" },
-    { id: "food_jollof",     title: "Jollof Rice", description: "₵25 - ₵50 · Plain, no protein" },
-    { id: "food_plain_rice", title: "Plain Rice",  description: "₵25 - ₵50 · Plain, no protein" },
+    { id: "food_fried_rice", title: "Fried Rice",  description: "₵25 - ₵50" },
+    { id: "food_jollof",     title: "Jollof Rice", description: "₵25 - ₵50" },
+    { id: "food_plain_rice", title: "Plain Rice",  description: "₵25 - ₵50" },
     { id: "food_waakye",     title: "Waakye",       description: "₵10 - ₵50" },
-    { id: "food_fufu",       title: "Fufu",         description: "₵5 - ₵50 · Choose soup & protein" },
+    { id: "food_fufu",       title: "Fufu",         description: "₵10 - ₵50 · Choose soup & protein" },
     { id: "food_banku",      title: "Banku",        description: "₵5 - ₵50 · Choose soup & protein" },
     { id: "food_kokonte",    title: "Kokonte",       description: "₵5 - ₵50 · Choose soup & protein" },
     { id: "food_rice_ball",  title: "Rice Ball",    description: "₵5 - ₵50 · Choose soup & protein" }
@@ -275,15 +283,26 @@ function riceAmountRows() {
   return RICE_AMOUNTS.map(amount => ({
     id: `riceamt_${amount}`,
     title: money(amount),
-    description: "Plain rice — no protein"
+    description: "Base food amount"
   }));
 }
 
 /*--------------------------------------------------------------------------
- LOCAL FOOD AMOUNTS
+ LOCAL FOOD AMOUNTS (Banku / Kokonte / Rice Ball)
 --------------------------------------------------------------------------*/
 function localFoodAmountRows() {
   return LOCAL_FOOD_AMOUNTS.map(amount => ({
+    id: `amount_${amount}`,
+    title: money(amount),
+    description: "Base food amount"
+  }));
+}
+
+/*--------------------------------------------------------------------------
+ FUFU AMOUNTS
+--------------------------------------------------------------------------*/
+function fufuAmountRows() {
+  return FUFU_AMOUNTS.map(amount => ({
     id: `amount_${amount}`,
     title: money(amount),
     description: "Base food amount"
@@ -329,7 +348,7 @@ function itemRows(catalog) {
 function getCatalogForSession(session) {
   if (session.food === "Waakye") return WAAKYE_ADDONS;
   if (LOCAL_FOODS.includes(session.food)) return LOCAL_PROTEINS;
-  return null; // Fried Rice / Jollof Rice — no protein/add-on catalog
+  return null; // Fried Rice / Jollof Rice / Plain Rice — no protein/add-on catalog
 }
 
 /*--------------------------------------------------------------------------
@@ -586,11 +605,11 @@ async function handleCustomerInteractive(from, message) {
     session.soup = null;
     session.proteins = [];
 
-    // Plain rice: Fried Rice / Jollof Rice — just a price, no protein
+    // Plain rice: Fried Rice / Jollof Rice / Plain Rice — just a price, no protein
     if (PLAIN_RICE_FOODS.includes(food)) {
       session.step = "RICE_AMOUNT";
       return sendInteractiveList(from,
-        `🍚 *${food}*\n\nThis is plain rice with no protein included.\n\nChoose your price:`,
+        `🍚 *${food}*\n\nChoose your price:`,
         "Portions",
         riceAmountRows()
       );
@@ -606,7 +625,17 @@ async function handleCustomerInteractive(from, message) {
       );
     }
 
-    // Local foods (Fufu / Banku / Kokonte / Rice Ball): amount → soup → protein
+    // Fufu: base amount ₵10 - ₵50, then soup → protein
+    if (food === "Fufu") {
+      session.step = "LOCAL_AMOUNT";
+      return sendInteractiveList(from,
+        `🍲 *${food}*\n\nChoose the amount of food you want.\n\nYou can select any amount from ₵10 to ₵50.`,
+        "Food Amount",
+        fufuAmountRows()
+      );
+    }
+
+    // Local foods (Banku / Kokonte / Rice Ball): amount → soup → protein
     session.step = "LOCAL_AMOUNT";
     return sendInteractiveList(from,
       `🍲 *${food}*\n\nChoose the amount of food you want.\n\nYou can select any amount from ₵5 to ₵50.`,
@@ -640,10 +669,11 @@ async function handleCustomerInteractive(from, message) {
     );
   }
 
-  /*-- LOCAL FOOD AMOUNT --*/
+  /*-- LOCAL FOOD AMOUNT (Fufu / Banku / Kokonte / Rice Ball) --*/
   if (id.startsWith("amount_")) {
     const amount = Number(id.replace("amount_", ""));
-    if (!LOCAL_FOOD_AMOUNTS.includes(amount)) return;
+    const validAmounts = session.food === "Fufu" ? FUFU_AMOUNTS : LOCAL_FOOD_AMOUNTS;
+    if (!validAmounts.includes(amount)) return;
 
     session.foodAmount = amount;
     session.step = "SOUP";
