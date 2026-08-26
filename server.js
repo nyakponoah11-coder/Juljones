@@ -66,10 +66,10 @@ for (let amount = 10; amount <= 50; amount += 5) {
 --------------------------------------------------------------------------*/
 const SOUPS = {
   soup_light:      { name: "Light Soup" },
-  soup_okro:       { name: "Okro Soup" },
+  soup_okro:       { name: "Okro Stew" },
   soup_palmnut:    { name: "Palmnut Soup" },
   soup_groundnut:  { name: "Groundnut Soup" },
-  soup_assorted:   { name: "Assorted" }
+  soup_goat:   { name: "Goat soup" }
 };
 
 /*--------------------------------------------------------------------------
