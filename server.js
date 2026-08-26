@@ -2,7 +2,6 @@ require("dotenv").config();
 
 const express = require("express");
 const axios = require("axios");
-const crypto = require("crypto");
 
 const app = express();
 app.use(express.json({ limit: "2mb" }));
@@ -42,18 +41,12 @@ const BRANCHES = {
 };
 
 /*--------------------------------------------------------------------------
-FOOD PRICES
+ RICE / JOLLOF — plain rice only, NO protein, just a price selection
 --------------------------------------------------------------------------*/
-const RICE_PORTIONS = [
-  { id: "rice_20", amount: 25, chicken: 1 },
-  { id: "rice_25", amount: 30, chicken: 1 },
-  { id: "rice_30", amount: 40, chicken: 1 },
-  { id: "rice_40", amount: 45, chicken: 1 },
-  { id: "rice_50", amount: 50, chicken: 2 }
-];
+const RICE_AMOUNTS = [25, 30, 40, 45, 50];
 
 /*--------------------------------------------------------------------------
- FUFU / BANKU / KOKONTE
+ FUFU / BANKU / KOKONTE / RICE BALL — base food amount
 --------------------------------------------------------------------------*/
 const LOCAL_FOOD_AMOUNTS = [];
 for (let amount = 5; amount <= 50; amount += 5) {
@@ -61,14 +54,53 @@ for (let amount = 5; amount <= 50; amount += 5) {
 }
 
 /*--------------------------------------------------------------------------
- PROTEINS
+ WAAKYE — base food amount (₵10 - ₵50)
 --------------------------------------------------------------------------*/
-const PROTEINS = {
-  chicken:   { name: "Chicken",        price: 15, emoji: "🍗" },
-  intestine: { name: "Cow Intestines", price: 10, emoji: "🐄" },
-  fish:      { name: "Fish",           price: 20, emoji: "🐟" },
-  egg:       { name: "Egg",            price: 4,  emoji: "🥚" }
+const WAAKYE_AMOUNTS = [];
+for (let amount = 10; amount <= 50; amount += 5) {
+  WAAKYE_AMOUNTS.push(amount);
+}
+
+/*--------------------------------------------------------------------------
+ SOUPS — for Banku / Fufu / Kokonte / Rice Ball only. No price, just a choice.
+--------------------------------------------------------------------------*/
+const SOUPS = {
+  soup_light:      { name: "Light Soup" },
+  soup_okro:       { name: "Okro Soup" },
+  soup_palmnut:    { name: "Palmnut Soup" },
+  soup_groundnut:  { name: "Groundnut Soup" },
+  soup_assorted:   { name: "Assorted" }
 };
+
+/*--------------------------------------------------------------------------
+ WAAKYE ADD-ONS
+--------------------------------------------------------------------------*/
+const WAAKYE_ADDONS = {
+  egg:       { name: "Egg",       price: 4,  emoji: "🥚" },
+  meat:      { name: "Meat",      price: 20, emoji: "🍖" },
+  wele:      { name: "Wele",      price: 10, emoji: "🐄" },
+  gari:      { name: "Gari",      price: 5,  emoji: "🌾" },
+  spaghetti: { name: "Spaghetti", price: 10, emoji: "🍝" },
+  sausage:   { name: "Sausage",   price: 5,  emoji: "🌭" },
+  fish:      { name: "Fish",      price: 10, emoji: "🐟" },
+  salad:     { name: "Salad",     price: 5,  emoji: "🥗" }
+};
+
+/*--------------------------------------------------------------------------
+ LOCAL FOOD PROTEINS — for Banku / Fufu / Kokonte / Rice Ball
+--------------------------------------------------------------------------*/
+const LOCAL_PROTEINS = {
+  cow_meat:  { name: "Cow Meat",  price: 20, emoji: "🐄" },
+  goat_meat: { name: "Goat Meat", price: 20, emoji: "🐐" },
+  fish:      { name: "Fish",      price: 10, emoji: "🐟" },
+  chicken:   { name: "Chicken",   price: 20, emoji: "🍗" },
+  intestine: { name: "Intestine", price: 10, emoji: "🐄" },
+  wele:      { name: "Wele",      price: 10, emoji: "🐄" },
+  beef:      { name: "Beef",      price: 5,  emoji: "🥩" }
+};
+
+const LOCAL_FOODS = ["Fufu", "Banku", "Kokonte", "Rice Ball"];
+const PLAIN_RICE_FOODS = ["Fried Rice", "Jollof Rice"];
 
 /*--------------------------------------------------------------------------
  SESSIONS AND ORDERS
@@ -96,8 +128,8 @@ function getSession(phone) {
       step: "WELCOME",
       branch: null,
       food: null,
-      ricePortion: null,
       foodAmount: null,
+      soup: null,
       proteins: [],
       fulfillment: null,
       address: null,
@@ -112,8 +144,8 @@ function resetSession(phone) {
     step: "WELCOME",
     branch: null,
     food: null,
-    ricePortion: null,
     foodAmount: null,
+    soup: null,
     proteins: [],
     fulfillment: null,
     address: null,
@@ -225,24 +257,24 @@ function getBranchFromId(id) {
 --------------------------------------------------------------------------*/
 function foodRows() {
   return [
-    { id: "food_fried_rice", title: "Fried Rice",  description: "₵25 - ₵50" },
-    { id: "food_jollof",     title: "Jollof Rice", description: "₵25 - ₵50" },
-    { id: "food_waakye",     title: "Waakye",       description: "₵25 - ₵50" },
-    { id: "food_fufu",       title: "Fufu",         description: "₵5 - ₵50"  },
-    { id: "food_banku",      title: "Banku",        description: "₵5 - ₵50"  },
-    { id: "food_kokonte",    title: "Kokonte",       description: "₵5 - ₵50"  },
-    { id: "food_rice_ball",  title: "Rice Ball",    description: "₵5 - ₵50"  }
+    { id: "food_fried_rice", title: "Fried Rice",  description: "₵25 - ₵50 · Plain, no protein" },
+    { id: "food_jollof",     title: "Jollof Rice", description: "₵25 - ₵50 · Plain, no protein" },
+    { id: "food_waakye",     title: "Waakye",       description: "₵10 - ₵50 · Choose your add-ons" },
+    { id: "food_fufu",       title: "Fufu",         description: "₵5 - ₵50 · Choose soup & protein" },
+    { id: "food_banku",      title: "Banku",        description: "₵5 - ₵50 · Choose soup & protein" },
+    { id: "food_kokonte",    title: "Kokonte",       description: "₵5 - ₵50 · Choose soup & protein" },
+    { id: "food_rice_ball",  title: "Rice Ball",    description: "₵5 - ₵50 · Choose soup & protein" }
   ];
 }
 
 /*--------------------------------------------------------------------------
- RICE PORTIONS
+ RICE AMOUNTS (plain — no protein)
 --------------------------------------------------------------------------*/
-function riceRows() {
-  return RICE_PORTIONS.map(portion => ({
-    id: portion.id,
-    title: money(portion.amount),
-    description: `${portion.chicken} chicken`
+function riceAmountRows() {
+  return RICE_AMOUNTS.map(amount => ({
+    id: `riceamt_${amount}`,
+    title: money(amount),
+    description: "Plain rice — no protein"
   }));
 }
 
@@ -258,30 +290,60 @@ function localFoodAmountRows() {
 }
 
 /*--------------------------------------------------------------------------
- PROTEIN SELECTION
+ WAAKYE AMOUNTS
 --------------------------------------------------------------------------*/
-function proteinRows() {
-  return [
-    { id: "protein_chicken",   title: "Chicken — ₵15",    description: "Add chicken"         },
-    { id: "protein_intestine", title: "Intestines — ₵10", description: "Add cow intestines"  },
-    { id: "protein_fish",      title: "Fish — ₵20",       description: "Add fish"            },
-    { id: "protein_egg",       title: "Egg — ₵4",         description: "Add egg"             }
-  ];
+function waakyeAmountRows() {
+  return WAAKYE_AMOUNTS.map(amount => ({
+    id: `waakyeamt_${amount}`,
+    title: money(amount),
+    description: "Base food amount"
+  }));
+}
+
+/*--------------------------------------------------------------------------
+ SOUP SELECTION
+--------------------------------------------------------------------------*/
+function soupRows() {
+  return Object.entries(SOUPS).map(([id, item]) => ({
+    id,
+    title: item.name,
+    description: "Choose this soup"
+  }));
+}
+
+/*--------------------------------------------------------------------------
+ GENERIC ITEM (protein / add-on) ROWS — catalog-driven
+--------------------------------------------------------------------------*/
+function itemRows(catalog) {
+  return Object.entries(catalog).map(([id, item]) => ({
+    id: `item_${id}`,
+    title: `${item.name} — ${money(item.price)}`,
+    description: "Tap to add"
+  }));
+}
+
+/*--------------------------------------------------------------------------
+ CATALOG RESOLUTION — which protein/add-on list applies to the current food
+--------------------------------------------------------------------------*/
+function getCatalogForSession(session) {
+  if (session.food === "Waakye") return WAAKYE_ADDONS;
+  if (LOCAL_FOODS.includes(session.food)) return LOCAL_PROTEINS;
+  return null; // Fried Rice / Jollof Rice — no protein/add-on catalog
 }
 
 /*--------------------------------------------------------------------------
  CALCULATE TOTAL
 --------------------------------------------------------------------------*/
 function getBaseFoodPrice(session) {
-  if (session.food === "Fried Rice" || session.food === "Jollof Rice" || session.food === "Waakye") {
-    return session.ricePortion.amount;
-  }
-  return Number(session.foodAmount);
+  return Number(session.foodAmount) || 0;
 }
 
 function getProteinTotal(session) {
-  return session.proteins.reduce((total, protein) => {
-    return total + PROTEINS[protein].price;
+  const catalog = getCatalogForSession(session);
+  if (!catalog) return 0;
+  return session.proteins.reduce((total, itemId) => {
+    const item = catalog[itemId];
+    return total + (item ? item.price : 0);
   }, 0);
 }
 
@@ -290,19 +352,24 @@ function calculateTotal(session) {
 }
 
 /*--------------------------------------------------------------------------
- PROTEIN SUMMARY
+ PROTEIN / ADD-ON SUMMARY
 --------------------------------------------------------------------------*/
 function proteinSummary(session) {
-  if (!session.proteins.length) return "No extra protein";
+  const catalog = getCatalogForSession(session);
+  if (!catalog || !session.proteins.length) return "No extra protein/add-ons";
+
   const counts = {};
-  session.proteins.forEach(protein => {
-    counts[protein] = (counts[protein] || 0) + 1;
+  session.proteins.forEach(itemId => {
+    counts[itemId] = (counts[itemId] || 0) + 1;
   });
+
   return Object.entries(counts)
-    .map(([key, quantity]) => {
-      const item = PROTEINS[key];
+    .map(([itemId, quantity]) => {
+      const item = catalog[itemId];
+      if (!item) return null;
       return `${item.emoji} ${item.name} x${quantity} — ${money(item.price * quantity)}`;
     })
+    .filter(Boolean)
     .join("\n");
 }
 
@@ -335,12 +402,13 @@ function generateOrderId() {
 --------------------------------------------------------------------------*/
 function buildOrderSummary(session) {
   const basePrice = getBaseFoodPrice(session);
+  const soupLine = session.soup ? `🥣 Soup: ${SOUPS[session.soup]?.name || session.soup}\n` : "";
   return `🛍️ *${STORE_NAME.toUpperCase()} ORDER*
 
 📍 Branch: ${session.branch}
 🍽️ Food: ${session.food}
 💰 Food amount: ${money(basePrice)}
-${proteinSummary(session)}
+${soupLine}${proteinSummary(session)}
 
 ━━━━━━━━━━━━━━
 
@@ -377,6 +445,8 @@ async function sendOrderToBranch(order) {
     return false;
   }
 
+  const soupLine = order.soup ? `🥣 Soup: ${SOUPS[order.soup]?.name || order.soup}\n` : "";
+
   const message = `🔔 *NEW ORDER*
 
 🆔 Order: ${order.id}
@@ -384,7 +454,7 @@ async function sendOrderToBranch(order) {
 📱 Customer: ${order.customerPhone}
 🍽️ Food: ${order.food}
 💰 Food: ${money(order.basePrice)}
-${order.proteinSummary}
+${soupLine}${order.proteinSummary}
 
 ━━━━━━━━━━━━━━
 
@@ -422,7 +492,7 @@ Enjoy delicious local food from Juljones Food.
 
 🍚 Fried Rice
 🍚 Jollof Rice
-🍚 Waakye
+🍛 Waakye
 🍚 Rice Ball
 🍲 Fufu
 🍲 Banku
@@ -495,11 +565,6 @@ async function handleCustomerInteractive(from, message) {
 
   /*-- FOOD MENU --*/
   if (id.startsWith("food_")) {
-    /*
-     BUG 2 FIXED: food_rice_ball id now matches the foodRows() id.
-     BUG 3 FIXED: food_waakye now routes to RICE_PORTION (priced like rice)
-     instead of LOCAL_AMOUNT.
-    */
     const foodMap = {
       food_fried_rice: "Fried Rice",
       food_jollof:     "Jollof Rice",
@@ -514,18 +579,31 @@ async function handleCustomerInteractive(from, message) {
     if (!food) return;
 
     session.food = food;
+    session.foodAmount = null;
+    session.soup = null;
+    session.proteins = [];
 
-    // Rice-style foods → show portions
-    if (["Fried Rice", "Jollof Rice", "Waakye"].includes(food)) {
-      session.step = "RICE_PORTION";
+    // Plain rice: Fried Rice / Jollof Rice — just a price, no protein
+    if (PLAIN_RICE_FOODS.includes(food)) {
+      session.step = "RICE_AMOUNT";
       return sendInteractiveList(from,
-        `🍚 *${food}*\n\nChoose your portion:`,
+        `🍚 *${food}*\n\nThis is plain rice with no protein included.\n\nChoose your price:`,
         "Portions",
-        riceRows()
+        riceAmountRows()
       );
     }
 
-    // Local foods → show amount
+    // Waakye: choose base amount first, then add-ons
+    if (food === "Waakye") {
+      session.step = "WAAKYE_AMOUNT";
+      return sendInteractiveList(from,
+        `🍛 *Waakye*\n\nChoose the amount of food you want.\n\nYou can select any amount from ₵10 to ₵50.`,
+        "Food Amount",
+        waakyeAmountRows()
+      );
+    }
+
+    // Local foods (Fufu / Banku / Kokonte / Rice Ball): amount → soup → protein
     session.step = "LOCAL_AMOUNT";
     return sendInteractiveList(from,
       `🍲 *${food}*\n\nChoose the amount of food you want.\n\nYou can select any amount from ₵5 to ₵50.`,
@@ -534,37 +612,29 @@ async function handleCustomerInteractive(from, message) {
     );
   }
 
-  /*-- RICE PORTION --*/
-  if (id.startsWith("rice_")) {
-    const portion = RICE_PORTIONS.find(item => item.id === id);
-    if (!portion) return;
+  /*-- PLAIN RICE AMOUNT (no protein) --*/
+  if (id.startsWith("riceamt_")) {
+    const amount = Number(id.replace("riceamt_", ""));
+    if (!RICE_AMOUNTS.includes(amount)) return;
 
-    session.ricePortion = portion;
-    session.proteins = [];
-    for (let i = 0; i < portion.chicken; i++) {
-      session.proteins.push("chicken");
-    }
-    session.step = "RICE_EXTRA";
-
-    return sendButtons(from,
-      `🍚 ${session.food} — ${money(portion.amount)}\n\n🍗 Includes ${portion.chicken} chicken.\n\nWould you like to add anything else?`,
-      [
-        { id: "add_protein", title: "➕ Add Protein" },
-        { id: "no_extra",    title: "➡️ Continue"    }
-      ]
-    );
-  }
-
-  /*-- ADD PROTEIN --*/
-  if (id === "add_protein") {
-    session.step = "PROTEIN";
-    return sendInteractiveList(from, "Choose a protein/add-on to add:", "Protein", proteinRows());
-  }
-
-  /*-- NO EXTRA --*/
-  if (id === "no_extra") {
+    session.foodAmount = amount;
     session.step = "FULFILLMENT";
     return showFulfillmentOptions(from);
+  }
+
+  /*-- WAAKYE AMOUNT --*/
+  if (id.startsWith("waakyeamt_")) {
+    const amount = Number(id.replace("waakyeamt_", ""));
+    if (!WAAKYE_AMOUNTS.includes(amount)) return;
+
+    session.foodAmount = amount;
+    session.proteins = [];
+    session.step = "PROTEIN";
+    return sendInteractiveList(from,
+      `Waakye: ${money(amount)}\n\nNow choose your add-ons (you can add more than one):`,
+      "Add-ons",
+      itemRows(WAAKYE_ADDONS)
+    );
   }
 
   /*-- LOCAL FOOD AMOUNT --*/
@@ -573,22 +643,34 @@ async function handleCustomerInteractive(from, message) {
     if (!LOCAL_FOOD_AMOUNTS.includes(amount)) return;
 
     session.foodAmount = amount;
-    session.proteins = [];
-    session.step = "PROTEIN";
+    session.step = "SOUP";
     return sendInteractiveList(from,
-      `${session.food}: ${money(amount)}\n\nNow choose your protein or add-on.`,
-      "Protein",
-      proteinRows()
+      `${session.food}: ${money(amount)}\n\nNow choose your soup:`,
+      "Soup",
+      soupRows()
     );
   }
 
-  /*-- PROTEIN --*/
-  if (id.startsWith("protein_")) {
-    const proteinId = id.replace("protein_", "");
-    if (!PROTEINS[proteinId]) return;
+  /*-- SOUP SELECTION --*/
+  if (id in SOUPS) {
+    session.soup = id;
+    session.proteins = [];
+    session.step = "PROTEIN";
+    return sendInteractiveList(from,
+      `🥣 ${SOUPS[id].name} selected.\n\nNow choose your protein:`,
+      "Protein",
+      itemRows(LOCAL_PROTEINS)
+    );
+  }
 
-    session.proteins.push(proteinId);
-    const item = PROTEINS[proteinId];
+  /*-- PROTEIN / ADD-ON SELECTION --*/
+  if (id.startsWith("item_")) {
+    const catalog = getCatalogForSession(session);
+    const itemId = id.replace("item_", "");
+    if (!catalog || !catalog[itemId]) return;
+
+    session.proteins.push(itemId);
+    const item = catalog[itemId];
 
     await sendWhatsAppText(from,
       `✅ ${item.emoji} ${item.name} added — ${money(item.price)}\n\nCurrent total: ${money(calculateTotal(session))}`
@@ -605,8 +687,10 @@ async function handleCustomerInteractive(from, message) {
 
   /*-- ADD MORE PROTEIN --*/
   if (id === "add_more_protein") {
+    const catalog = getCatalogForSession(session);
+    if (!catalog) return;
     session.step = "PROTEIN";
-    return sendInteractiveList(from, "Choose another protein/add-on:", "Protein", proteinRows());
+    return sendInteractiveList(from, "Choose another protein/add-on:", "Protein", itemRows(catalog));
   }
 
   /*-- DONE PROTEIN --*/
@@ -665,6 +749,7 @@ async function placeCustomerOrder(from, session) {
     branch:        session.branch,
     food:          session.food,
     basePrice:     getBaseFoodPrice(session),
+    soup:          session.soup || null,
     proteins:      [...session.proteins],
     proteinSummary: proteinSummary(session),
     total:         calculateTotal(session),
@@ -683,13 +768,15 @@ async function placeCustomerOrder(from, session) {
     );
   }
 
+  const soupLine = order.soup ? `🥣 Soup: ${SOUPS[order.soup]?.name || order.soup}\n` : "";
+
   await sendWhatsAppText(from,
     `🎉 *ORDER PLACED SUCCESSFULLY!*
 
 🆔 Order: ${order.id}
 📍 Branch: ${order.branch}
 🍽️ Food: ${order.food}
-${order.proteinSummary}
+${soupLine}${order.proteinSummary}
 💵 Total: ${money(order.total)}
 🚚 Method: ${order.fulfillment === "pickup" ? "Pick Up" : "Delivery — Pay on Delivery"}
 
