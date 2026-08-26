@@ -32,7 +32,7 @@ BRANCHES
 --------------------------------------------------------------------------*/
 const BRANCHES = {
   "Abeka": { number: ABEKA_BRANCH_NUMBER },
-  "Race Coarse Legon": { number: RACE_COADRSE_BRANCH_NUMBER },
+  "Race Coarse Legon": { number: RACE_COARSE_BRANCH_NUMBER },
   "Tabora": { number:  TOBORA_BRANCH_NUMBER,},
   "GCTU": { number: GCTU_BRANCH_NUMBER },
 
