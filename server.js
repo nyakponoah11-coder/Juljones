@@ -450,7 +450,7 @@ ${session.fulfillment === "delivery" ? `\n📍 Address:\n${session.address}` : "
 async function sendOrderConfirmation(to, session) {
   const total = calculateTotal(session);
   await sendWhatsAppText(to,
-    `🧾 *PLEASE CONFIRM YOUR ORDER*\n\n${buildOrderSummary(session)}\n\n━━━━━━━━━━━━━━\n\nIs everything correct?`
+    `🧾 *PLEASE CONFIRM YOUR ORDER*\n\n${buildOrderSummary(session)}\n\n━━━━━━━━━━━━━━\n Is everything correct?`
   );
   return sendButtons(to,
     `Total: ${money(total)}\n\nWould you like to place this order?`,
