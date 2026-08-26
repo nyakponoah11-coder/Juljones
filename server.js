@@ -41,12 +41,17 @@ const BRANCHES = {
 };
 
 /*--------------------------------------------------------------------------
- RICE / JOLLOF — plain rice only, NO protein, just a price selection
+ RICE / JOLLOF / PLAIN RICE
 --------------------------------------------------------------------------*/
-const RICE_AMOUNTS = [25, 30, 40, 45, 50];
+const RICE_PORTIONS = [
+  { amount: 25, chicken: 1 },
+  { amount: 30, chicken: 1 },
+  { amount: 40, chicken: 1 },
+  { amount: 50, chicken: 2 }
+];
 
 /*--------------------------------------------------------------------------
- BANKU / KOKONTE / RICE BALL — base food amount (₵5 - ₵50)
+ BANKU / KOKONTE / RICE BALL
 --------------------------------------------------------------------------*/
 const LOCAL_FOOD_AMOUNTS = [];
 for (let amount = 5; amount <= 50; amount += 5) {
@@ -54,7 +59,7 @@ for (let amount = 5; amount <= 50; amount += 5) {
 }
 
 /*--------------------------------------------------------------------------
- FUFU — base food amount (₵10 - ₵50)
+ FUFU PRICE
 --------------------------------------------------------------------------*/
 const FUFU_AMOUNTS = [];
 for (let amount = 10; amount <= 50; amount += 5) {
@@ -62,7 +67,7 @@ for (let amount = 10; amount <= 50; amount += 5) {
 }
 
 /*--------------------------------------------------------------------------
- WAAKYE — base food amount (₵10 - ₵50)
+ WAAKYE PRICE
 --------------------------------------------------------------------------*/
 const WAAKYE_AMOUNTS = [];
 for (let amount = 10; amount <= 50; amount += 5) {
@@ -70,7 +75,7 @@ for (let amount = 10; amount <= 50; amount += 5) {
 }
 
 /*--------------------------------------------------------------------------
- SOUPS — for Banku / Fufu / Kokonte / Rice Ball only. No price, just a choice.
+ SOUPS  for Banku / Fufu / Kokonte / Rice Ball
 --------------------------------------------------------------------------*/
 const SOUPS = {
   soup_light:      { name: "Light Soup" },
@@ -95,7 +100,7 @@ const WAAKYE_ADDONS = {
 };
 
 /*--------------------------------------------------------------------------
- LOCAL FOOD PROTEINS — for Banku / Fufu / Kokonte / Rice Ball
+ LOCAL FOOD PROTEINS for Banku / Fufu / Kokonte / Rice Ball
 --------------------------------------------------------------------------*/
 const LOCAL_PROTEINS = {
   cow_meat:  { name: "Cow Meat",  price: 20, emoji: "🐄" },
@@ -139,6 +144,7 @@ function getSession(phone) {
       foodAmount: null,
       soup: null,
       proteins: [],
+      includedChicken: 0,
       fulfillment: null,
       address: null,
       order: null
@@ -155,6 +161,7 @@ function resetSession(phone) {
     foodAmount: null,
     soup: null,
     proteins: [],
+    includedChicken: 0,
     fulfillment: null,
     address: null,
     order: null
@@ -277,13 +284,13 @@ function foodRows() {
 }
 
 /*--------------------------------------------------------------------------
- RICE AMOUNTS (plain — no protein)
+ RICE AMOUNTS (includes free chicken)
 --------------------------------------------------------------------------*/
 function riceAmountRows() {
-  return RICE_AMOUNTS.map(amount => ({
-    id: `riceamt_${amount}`,
-    title: money(amount),
-    description: "Base food amount"
+  return RICE_PORTIONS.map(portion => ({
+    id: `riceamt_${portion.amount}`,
+    title: money(portion.amount),
+    description: `Includes ${portion.chicken} chicken`
   }));
 }
 
@@ -423,12 +430,13 @@ function generateOrderId() {
 function buildOrderSummary(session) {
   const basePrice = getBaseFoodPrice(session);
   const soupLine = session.soup ? `🥣 Soup: ${SOUPS[session.soup]?.name || session.soup}\n` : "";
+  const chickenLine = session.includedChicken ? `🍗 Includes ${session.includedChicken} chicken\n` : "";
   return `🛍️ *${STORE_NAME.toUpperCase()} ORDER*
 
 📍 Branch: ${session.branch}
 🍽️ Food: ${session.food}
 💰 Food amount: ${money(basePrice)}
-${soupLine}${proteinSummary(session)}
+${chickenLine}${soupLine}${proteinSummary(session)}
 
 ━━━━━━━━━━━━━━
 
@@ -466,6 +474,7 @@ async function sendOrderToBranch(order) {
   }
 
   const soupLine = order.soup ? `🥣 Soup: ${SOUPS[order.soup]?.name || order.soup}\n` : "";
+  const chickenLine = order.includedChicken ? `🍗 Includes ${order.includedChicken} chicken\n` : "";
 
   const message = `🔔 *NEW ORDER*
 
@@ -474,7 +483,7 @@ async function sendOrderToBranch(order) {
 📱 Customer: ${order.customerPhone}
 🍽️ Food: ${order.food}
 💰 Food: ${money(order.basePrice)}
-${soupLine}${order.proteinSummary}
+${chickenLine}${soupLine}${order.proteinSummary}
 
 ━━━━━━━━━━━━━━
 
@@ -604,6 +613,7 @@ async function handleCustomerInteractive(from, message) {
     session.foodAmount = null;
     session.soup = null;
     session.proteins = [];
+    session.includedChicken = 0;
 
     // Plain rice: Fried Rice / Jollof Rice / Plain Rice — just a price, no protein
     if (PLAIN_RICE_FOODS.includes(food)) {
@@ -644,12 +654,14 @@ async function handleCustomerInteractive(from, message) {
     );
   }
 
-  /*-- PLAIN RICE AMOUNT (no protein) --*/
+  /*-- PLAIN RICE AMOUNT (includes free chicken) --*/
   if (id.startsWith("riceamt_")) {
     const amount = Number(id.replace("riceamt_", ""));
-    if (!RICE_AMOUNTS.includes(amount)) return;
+    const portion = RICE_PORTIONS.find(item => item.amount === amount);
+    if (!portion) return;
 
-    session.foodAmount = amount;
+    session.foodAmount = portion.amount;
+    session.includedChicken = portion.chicken;
     session.step = "FULFILLMENT";
     return showFulfillmentOptions(from);
   }
@@ -783,6 +795,7 @@ async function placeCustomerOrder(from, session) {
     food:          session.food,
     basePrice:     getBaseFoodPrice(session),
     soup:          session.soup || null,
+    includedChicken: session.includedChicken || 0,
     proteins:      [...session.proteins],
     proteinSummary: proteinSummary(session),
     total:         calculateTotal(session),
@@ -802,6 +815,7 @@ async function placeCustomerOrder(from, session) {
   }
 
   const soupLine = order.soup ? `🥣 Soup: ${SOUPS[order.soup]?.name || order.soup}\n` : "";
+  const chickenLine = order.includedChicken ? `🍗 Includes ${order.includedChicken} chicken\n` : "";
 
   await sendWhatsAppText(from,
     `🎉 *ORDER PLACED SUCCESSFULLY!*
@@ -809,7 +823,7 @@ async function placeCustomerOrder(from, session) {
 🆔 Order: ${order.id}
 📍 Branch: ${order.branch}
 🍽️ Food: ${order.food}
-${soupLine}${order.proteinSummary}
+${chickenLine}${soupLine}${order.proteinSummary}
 💵 Total: ${money(order.total)}
 🚚 Method: ${order.fulfillment === "pickup" ? "Pick Up" : "Delivery — Pay on Delivery"}
 
