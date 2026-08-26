@@ -25,7 +25,7 @@ The bot currently supports:
 
 1. Abeka
 2. Lapaz
-3. GCTU
+3. Tabora
 4. East Legon
 5. UPSA
 6. Madina
