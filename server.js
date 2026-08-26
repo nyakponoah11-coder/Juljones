@@ -17,6 +17,7 @@ const {
   GCTU_BRANCH_NUMBER,
   RACE_COARSE_BRANCH_NUMBER,
   TOBORA_BRANCH_NUMBER,
+  FADAMA_BRANCH_NUMBER,
   
 
   STORE_NAME = "Juljones Food"
@@ -35,6 +36,7 @@ const BRANCHES = {
   "Race Coarse": { number: RACE_COARSE_BRANCH_NUMBER },
   "Tabora": { number:  TOBORA_BRANCH_NUMBER,},
   "GCTU": { number: GCTU_BRANCH_NUMBER },
+   "Fadama": { number: FADAMA_BRANCH_NUMBER },
 
 };
 
