@@ -100,7 +100,7 @@ const LOCAL_PROTEINS = {
 };
 
 const LOCAL_FOODS = ["Fufu", "Banku", "Kokonte", "Rice Ball"];
-const PLAIN_RICE_FOODS = ["Fried Rice", "Jollof Rice"];
+const PLAIN_RICE_FOODS = ["Fried Rice", "Jollof Rice", "Plain Rice"];
 
 /*--------------------------------------------------------------------------
  SESSIONS AND ORDERS
@@ -259,7 +259,8 @@ function foodRows() {
   return [
     { id: "food_fried_rice", title: "Fried Rice",  description: "₵25 - ₵50 · Plain, no protein" },
     { id: "food_jollof",     title: "Jollof Rice", description: "₵25 - ₵50 · Plain, no protein" },
-    { id: "food_waakye",     title: "Waakye",       description: "₵10 - ₵50 · Choose your add-ons" },
+    { id: "food_plain_rice", title: "Plain Rice",  description: "₵25 - ₵50 · Plain, no protein" },
+    { id: "food_waakye",     title: "Waakye",       description: "₵10 - ₵50" },
     { id: "food_fufu",       title: "Fufu",         description: "₵5 - ₵50 · Choose soup & protein" },
     { id: "food_banku",      title: "Banku",        description: "₵5 - ₵50 · Choose soup & protein" },
     { id: "food_kokonte",    title: "Kokonte",       description: "₵5 - ₵50 · Choose soup & protein" },
@@ -492,6 +493,7 @@ Enjoy delicious local food from Juljones Food.
 
 🍚 Fried Rice
 🍚 Jollof Rice
+🍚 Plain Rice
 🍛 Waakye
 🍚 Rice Ball
 🍲 Fufu
@@ -568,6 +570,7 @@ async function handleCustomerInteractive(from, message) {
     const foodMap = {
       food_fried_rice: "Fried Rice",
       food_jollof:     "Jollof Rice",
+      food_plain_rice: "Plain Rice",
       food_waakye:     "Waakye",
       food_fufu:       "Fufu",
       food_banku:      "Banku",
