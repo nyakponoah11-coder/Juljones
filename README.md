@@ -24,10 +24,9 @@ Delivery orders are paid on delivery.
 The bot currently supports:
 
 1. Abeka
-2. Lapaz
+2. Fadama
 3. Tabora
-4. East Legon
-5. UPSA
+5. GCTU
 6. Race
 
 Each branch has a different WhatsApp number.
