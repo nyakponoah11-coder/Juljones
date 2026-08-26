@@ -14,11 +14,10 @@ const {
   WHATSAPP_VERIFY_TOKEN,
 
   ABEKA_BRANCH_NUMBER,
-  LAPAZ_BRANCH_NUMBER,
   GCTU_BRANCH_NUMBER,
-  EAST_LEGON_BRANCH_NUMBER,
-  UPSA_BRANCH_NUMBER,
-  MADINA_BRANCH_NUMBER,
+  RACE_COARSE_BRANCH_NUMBER,
+  TOBORA_BRANCH_NUMBER,
+  
 
   STORE_NAME = "Juljones Food"
 } = process.env;
@@ -33,11 +32,10 @@ BRANCHES
 --------------------------------------------------------------------------*/
 const BRANCHES = {
   "Abeka": { number: ABEKA_BRANCH_NUMBER },
-  "Lapaz": { number: LAPAZ_BRANCH_NUMBER },
+  "Race Coarse Legon": { number: RACE_COADRSE_BRANCH_NUMBER },
+  "Tabora": { number:  TOBORA_BRANCH_NUMBER,},
   "GCTU": { number: GCTU_BRANCH_NUMBER },
-  "East Legon": { number: EAST_LEGON_BRANCH_NUMBER },
-  "UPSA": { number: UPSA_BRANCH_NUMBER },
-  "Madina": { number: MADINA_BRANCH_NUMBER }
+
 };
 
 /*--------------------------------------------------------------------------
