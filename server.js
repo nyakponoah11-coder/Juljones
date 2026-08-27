@@ -436,13 +436,10 @@ function buildOrderSummary(session) {
 🍽️ Food: ${session.food}
 💰 Food amount: ${money(basePrice)}
 ${chickenLine}${soupLine}${proteinSummary(session)}
-
 ━━━━━━━━━━━━━━
 
 💵 *TOTAL: ${money(calculateTotal(session))}*
-🚚 Method: ${session.fulfillment === "pickup" ? "Pick Up" : "Delivery — Pay on Delivery"}
-
-${session.fulfillment === "delivery" ? `\n📍 Address:\n${session.address}` : ""}`;
+🚚 Method: ${session.fulfillment === "pickup" ? "Pick Up" : "Delivery — Pay on Delivery"} ${session.fulfillment === "delivery" ? `\n📍 Address:\n${session.address}` : ""}`;
 }
 
 /*--------------------------------------------------------------------------
@@ -451,7 +448,7 @@ ${session.fulfillment === "delivery" ? `\n📍 Address:\n${session.address}` : "
 async function sendOrderConfirmation(to, session) {
   const total = calculateTotal(session);
   await sendWhatsAppText(to,
-    `🧾 *PLEASE CONFIRM YOUR ORDER*\n${buildOrderSummary(session)}━━━━━━━━━━━━━━\nIs everything correct?`
+    `🧾 *PLEASE CONFIRM YOUR ORDER*\n${buildOrderSummary(session)}━━━━━━━━━━━━━━\n\nIs everything correct?`
   );
   return sendButtons(to,
     `Total: ${money(total)}\n\nWould you like to place this order?`,
