@@ -481,16 +481,11 @@ async function sendOrderToBranch(order) {
 📍 Branch: ${order.branch}
 📱 Customer: ${order.customerPhone}
 🍽️ Food: ${order.food}
-💰 Food: ${money(order.basePrice)}
-${chickenLine}${soupLine}${order.proteinSummary}
-
-━━━━━━━━━━━━━━
+💰 Food: ${money(order.basePrice)} ${chickenLine}${soupLine}${order.proteinSummary}
+━━━━━━━━━━━━━
 
 💵 *TOTAL: ${money(order.total)}*
-🚚 Method: ${order.fulfillment === "pickup" ? "PICK UP" : "DELIVERY — PAY ON DELIVERY"}
-
-${order.fulfillment === "delivery" ? `\n📍 DELIVERY ADDRESS:\n${order.address}` : ""}
-
+🚚 Method: ${order.fulfillment === "pickup" ? "PICK UP" : "DELIVERY — PAY ON DELIVERY"} ${order.fulfillment === "delivery" ? `\n📍 DELIVERY ADDRESS:\n${order.address}` : ""}
 ━━━━━━━━━━━━━━
 
 Please start preparing this order.`;
@@ -821,17 +816,12 @@ async function placeCustomerOrder(from, session) {
 
 🆔 Order: ${order.id}
 📍 Branch: ${order.branch}
-🍽️ Food: ${order.food}
-${chickenLine}${soupLine}${order.proteinSummary}
+🍽️ Food: ${order.food} ${chickenLine}${soupLine}${order.proteinSummary}
 💵 Total: ${money(order.total)}
-🚚 Method: ${order.fulfillment === "pickup" ? "Pick Up" : "Delivery — Pay on Delivery"}
-
-${order.fulfillment === "delivery" ? `\n📍 Address:\n${order.address}` : ""}
-
+🚚 Method: ${order.fulfillment === "pickup" ? "Pick Up" : "Delivery — Pay on Delivery"}  ${order.fulfillment === "delivery" ? `\n📍 Address:\n${order.address}` : ""}
 ━━━━━━━━━━━━━━
 
 Your order has been sent to the branch.
-
 We will notify you when your food is ready. ❤️`
   );
 
