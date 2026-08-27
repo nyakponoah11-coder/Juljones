@@ -448,7 +448,7 @@ ${chickenLine}${soupLine}${proteinSummary(session)}
 async function sendOrderConfirmation(to, session) {
   const total = calculateTotal(session);
   await sendWhatsAppText(to,
-    `🧾 *PLEASE CONFIRM YOUR ORDER*\n${buildOrderSummary(session)}━━━━━━━━━━━━━━\n\nIs everything correct?`
+    `🧾 *PLEASE CONFIRM YOUR ORDER*\n${buildOrderSummary(session)}\n━━━━━━━━━━━━━━\n\nIs everything correct?`
   );
   return sendButtons(to,
     `Total: ${money(total)}\n\nWould you like to place this order?`,
