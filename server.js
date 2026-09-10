@@ -404,23 +404,11 @@ function proteinSummary(session) {
 --------------------------------------------------------------------------*/
 function generateOrderId() {
   const now = new Date();
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const hour = String(now.getHours()).padStart(2, "0");
 
-  const date = now.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric"
-  }).replace(/\//g, "-");
-
-  const time = now.toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false
-  }).replace(/:/g, "");
-
-  const rand = Math.floor(Math.random() * 900 + 100);
-
-  return `STN-${date}-${time}-${rand}`;
+  return `JJ-${day}${month}${hour}`;
 }
 
 /*--------------------------------------------------------------------------
@@ -471,6 +459,7 @@ async function sendOrderToBranch(order) {
 
   const soupLine = order.soup ? `🥣 Soup: ${SOUPS[order.soup]?.name || order.soup}\n` : "";
   const chickenLine = order.includedChicken ? `🍗 Includes ${order.includedChicken} chicken\n` : "";
+  const extras = `${chickenLine}${soupLine}${order.proteinSummary}`.trim();
 
   const message = `🔔 *NEW ORDER*
 
@@ -478,7 +467,7 @@ async function sendOrderToBranch(order) {
 📍 Branch: ${order.branch}
 📱 Customer: ${order.customerPhone}
 🍽️ Food: ${order.food}
-💰 Food: ${money(order.basePrice)} ${chickenLine}${soupLine}${order.proteinSummary}
+💰 Food: ${money(order.basePrice)}${extras ? `\n${extras}` : ""}
 ━━━━━━━━━━━━━
 
 💵 *TOTAL: ${money(order.total)}*
@@ -807,17 +796,19 @@ async function placeCustomerOrder(from, session) {
 
   const soupLine = order.soup ? `🥣 Soup: ${SOUPS[order.soup]?.name || order.soup}\n` : "";
   const chickenLine = order.includedChicken ? `🍗 Includes ${order.includedChicken} chicken\n` : "";
+  const addressLine = order.fulfillment === "delivery"
+    ? `\n📍 Address: ${order.address}`
+    : "";
 
   await sendWhatsAppText(from,
     `🎉 *ORDER PLACED SUCCESSFULLY!*
 
 🆔 Order: ${order.id}
 📍 Branch: ${order.branch}
-🍽️ Food: ${order.food} ${chickenLine}
-${soupLine}
-${order.proteinSummary}
+🍽️ Food: ${order.food}
+${chickenLine}${soupLine}${order.proteinSummary}
 💵 Total: ${money(order.total)}
-🚚 Method: ${order.fulfillment === "pickup" ? "Pick Up" : "Delivery — Pay on Delivery"}  ${order.fulfillment === "delivery" ? `\n📍 Address:\n${order.address}` : ""}
+🚚 Method: ${order.fulfillment === "pickup" ? "Pick Up" : "Delivery — Pay on Delivery"}${addressLine}
 ━━━━━━━━━━━━━━
 
 Your order has been sent to the branch.
