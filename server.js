@@ -813,8 +813,7 @@ async function placeCustomerOrder(from, session) {
 
 🆔 Order: ${order.id}
 📍 Branch: ${order.branch}
-🍽️ Food: ${order.food} 
-${chickenLine}
+🍽️ Food: ${order.food} ${chickenLine}
 ${soupLine}
 ${order.proteinSummary}
 💵 Total: ${money(order.total)}
