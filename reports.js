@@ -51,10 +51,10 @@ async function saveOrder(order) {
 
 async function getOrders(branch, period, fallbackOrders) {
   const range = getPeriodRange(period);
-  const fallback = Array.from(fallbackOrders.values())
+  const localOrders = Array.from(fallbackOrders.values())
     .filter(order => order.branch === branch && isInRange(order, range));
 
-  if (!supabase) return fallback;
+  if (!supabase) return localOrders;
 
   const { data, error } = await supabase
     .from("orders")
@@ -66,10 +66,10 @@ async function getOrders(branch, period, fallbackOrders) {
 
   if (error) {
     console.error("SUPABASE REPORT ERROR:", error.message);
-    return fallback;
+    return localOrders;
   }
 
-  return data.map(order => ({
+  const storedOrders = data.map(order => ({
     ...order,
     customerPhone: order.customer_phone,
     basePrice: order.base_price,
@@ -78,6 +78,15 @@ async function getOrders(branch, period, fallbackOrders) {
     fulfillment: order.fulfillment,
     createdAt: order.created_at
   }));
+
+  const combined = [...storedOrders, ...localOrders];
+  const seen = new Set();
+  return combined.filter(order => {
+    const key = `${order.id}|${order.createdAt}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).sort((left, right) => new Date(left.createdAt) - new Date(right.createdAt));
 }
 
 function money(value) {

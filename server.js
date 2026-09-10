@@ -870,7 +870,11 @@ async function placeCustomerOrder(from, session) {
   };
 
   orders.set(`${order.id}-${Date.now()}-${Math.random()}`, order);
-  saveOrder(order).catch(error => console.error("SUPABASE ORDER SAVE ERROR:", error.message));
+  try {
+    await saveOrder(order);
+  } catch (error) {
+    console.error("SUPABASE ORDER SAVE ERROR:", error.message);
+  }
 
   const branchSent = await sendOrderToBranch(order);
   if (!branchSent) {
