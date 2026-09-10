@@ -93,37 +93,84 @@ function money(value) {
   return `GHS ${Number(value || 0).toFixed(2)}`;
 }
 
+function drawTableHeader(doc, columns, y) {
+  doc.save();
+  doc.rect(40, y, 515, 24).fill("#17324D");
+  doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(8);
+  columns.forEach(column => doc.text(column.label, column.x + 7, y + 8, { width: column.width - 14 }));
+  doc.restore();
+}
+
 function createReportPdf(branch, period, orders) {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 40 });
+    const doc = new PDFDocument({ margin: 40, size: "A4" });
     const chunks = [];
     doc.on("data", chunk => chunks.push(chunk));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
     const total = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
-    doc.fontSize(20).font("Helvetica-Bold").text("JULJONES FOOD");
-    doc.moveDown(0.3).fontSize(15).text(`${period.toUpperCase()} ORDER REPORT`);
-    doc.moveDown(0.3).fontSize(11).font("Helvetica").text(`Branch: ${branch}`);
-    doc.text(`Generated: ${new Date().toLocaleString("en-GB")}`);
-    doc.moveDown().font("Helvetica-Bold").text(`Orders: ${orders.length}`);
-    doc.text(`Total sales: ${money(total)}`);
-    doc.moveDown();
-    doc.moveTo(40, doc.y).lineTo(555, doc.y).stroke();
-    doc.moveDown();
+    const average = orders.length ? total / orders.length : 0;
+    const columns = [
+      { label: "ORDER ID", x: 40, width: 96 },
+      { label: "TIME", x: 136, width: 72 },
+      { label: "ORDER DETAILS", x: 208, width: 183 },
+      { label: "METHOD", x: 391, width: 86 },
+      { label: "TOTAL", x: 477, width: 78 }
+    ];
+
+    doc.rect(0, 0, 595, 108).fill("#17324D");
+    doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(22).text("JULJONES FOOD", 40, 28);
+    doc.fontSize(11).font("Helvetica").fillColor("#B8DDE0").text("BRANCH PERFORMANCE REPORT", 40, 58);
+    doc.font("Helvetica-Bold").fontSize(11).fillColor("#FFFFFF").text(branch, 420, 30, { width: 135, align: "right" });
+    doc.font("Helvetica").fontSize(9).fillColor("#B8DDE0").text(period.toUpperCase(), 420, 50, { width: 135, align: "right" });
+    doc.fillColor("#253B53").font("Helvetica-Bold").fontSize(16).text(`${period[0].toUpperCase()}${period.slice(1)} order report`, 40, 132);
+    doc.fillColor("#6B7785").font("Helvetica").fontSize(9).text(`Generated ${new Date().toLocaleString("en-GB")}`, 40, 155);
+
+    const cards = [
+      { label: "ORDERS", value: String(orders.length), color: "#2A9D8F" },
+      { label: "TOTAL SALES", value: money(total), color: "#E08E0B" },
+      { label: "AVERAGE ORDER", value: money(average), color: "#457B9D" }
+    ];
+    cards.forEach((card, index) => {
+      const x = 40 + index * 172;
+      doc.roundedRect(x, 180, 160, 58, 5).fill("#F1F5F8");
+      doc.rect(x, 180, 5, 58).fill(card.color);
+      doc.fillColor("#6B7785").font("Helvetica-Bold").fontSize(8).text(card.label, x + 16, 193);
+      doc.fillColor("#17324D").font("Helvetica-Bold").fontSize(15).text(card.value, x + 16, 208, { width: 135 });
+    });
+
+    doc.fillColor("#253B53").font("Helvetica-Bold").fontSize(10).text("ORDER BREAKDOWN", 40, 270);
+    drawTableHeader(doc, columns, 288);
 
     if (!orders.length) {
-      doc.font("Helvetica").text("No orders were placed during this period.");
+      doc.fillColor("#6B7785").font("Helvetica").fontSize(10).text("No orders were placed during this period.", 47, 330);
     } else {
       orders.forEach((order, index) => {
-        doc.font("Helvetica-Bold").text(`${index + 1}. ${order.id}  |  ${money(order.total)}`);
-        doc.font("Helvetica").text(`Food: ${order.food}  |  Method: ${order.fulfillment || "-"}`);
-        if (order.soup) doc.text(`Soup: ${order.soup}`);
-        if (order.proteinSummary) doc.text(`Proteins: ${order.proteinSummary.replace(/[\r\n]+/g, ", ")}`);
-        doc.text(`Customer: ${order.customerPhone || "-"}  |  ${new Date(order.createdAt).toLocaleString("en-GB")}`);
-        doc.moveDown(0.7);
+        const details = [order.food];
+        if (order.soup) details.push(`Soup: ${order.soup}`);
+        if (order.proteinSummary) details.push(order.proteinSummary.replace(/[\r\n]+/g, ", "));
+        const detailText = details.join(" | ");
+        const rowHeight = Math.max(34, doc.heightOfString(detailText, { width: 169 }) + 16);
+
+        if (doc.y + rowHeight > 760) {
+          doc.addPage();
+          drawTableHeader(doc, columns, 48);
+          doc.y = 72;
+        }
+
+        const y = doc.y;
+        if (index % 2 === 0) doc.rect(40, y, 515, rowHeight).fill("#F1F5F8");
+        doc.fillColor("#253B53").font("Helvetica-Bold").fontSize(8).text(order.id, 47, y + 10, { width: 82 });
+        doc.font("Helvetica").text(new Date(order.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }), 143, y + 10, { width: 58 });
+        doc.text(detailText, 215, y + 8, { width: 169, lineGap: 2 });
+        doc.text(order.fulfillment === "pickup" ? "Pick up" : "Delivery", 398, y + 10, { width: 72 });
+        doc.font("Helvetica-Bold").text(money(order.total), 484, y + 10, { width: 64, align: "right" });
+        doc.y = y + rowHeight;
       });
     }
+
+    doc.fillColor("#6B7785").font("Helvetica").fontSize(8).text("Juljones Food - Confidential branch report", 40, 795, { width: 515, align: "center" });
 
     doc.end();
   });
