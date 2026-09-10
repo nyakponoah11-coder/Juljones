@@ -17,6 +17,22 @@ There is no online payment.
 
 Delivery orders are paid on delivery.
 
+## Branch Reports
+
+A branch can send `report` from its configured WhatsApp number and choose `Daily`,
+`Weekly`, or `Monthly`. The bot sends back a PDF containing the orders and total
+sales for that branch and period.
+
+Reports use Supabase when these environment variables are configured:
+
+```text
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+Run [supabase/schema.sql](supabase/schema.sql) once in the Supabase SQL Editor.
+The service-role key must stay on the server and must not be exposed in a browser.
+
 ---
 
 # 🏪 Branches

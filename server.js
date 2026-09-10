@@ -2,6 +2,8 @@ require("dotenv").config();
 
 const express = require("express");
 const axios = require("axios");
+const FormData = require("form-data");
+const { createReportPdf, getOrders, saveOrder } = require("./reports");
 
 const app = express();
 app.use(express.json({ limit: "2mb" }));
@@ -186,6 +188,32 @@ async function sendWhatsAppText(to, body) {
   });
 }
 
+async function sendWhatsAppDocument(to, pdfBuffer, filename, caption) {
+  const form = new FormData();
+  form.append("messaging_product", "whatsapp");
+  form.append("type", "application/pdf");
+  form.append("file", pdfBuffer, { filename, contentType: "application/pdf" });
+
+  const upload = await axios.post(
+    `https://graph.facebook.com/${GRAPH_VERSION}/${WHATSAPP_PHONE_NUMBER_ID}/media`,
+    form,
+    { headers: { Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}`, ...form.getHeaders() } }
+  );
+
+  return axios.post(WA_URL, {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to,
+    type: "document",
+    document: { id: upload.data.id, filename, caption }
+  }, {
+    headers: {
+      Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+      "Content-Type": "application/json"
+    }
+  });
+}
+
 /*--------------------------------------------------------------------------
  WHATSAPP BUTTONS
 --------------------------------------------------------------------------*/
@@ -264,6 +292,12 @@ function getBranchFromId(id) {
   const branches = Object.keys(BRANCHES);
   const index = Number(String(id).replace("branch_", ""));
   return branches[index];
+}
+
+function getBranchForPhone(phone) {
+  const normalized = normalizePhone(phone);
+  return Object.entries(BRANCHES)
+    .find(([, branch]) => normalizePhone(branch.number) === normalized)?.[0] || null;
 }
 
 /*--------------------------------------------------------------------------
@@ -522,9 +556,50 @@ Enjoy delicious local food from Juljones Food.
 /*--------------------------------------------------------------------------
  HANDLE TEXT
 --------------------------------------------------------------------------*/
+async function showReportOptions(to, branch) {
+  const session = getSession(to);
+  session.reportBranch = branch;
+  session.step = "REPORT_PERIOD";
+  return sendButtons(to,
+    `📊 *${branch.toUpperCase()} REPORT*\n\nWhich report would you like?`,
+    [
+      { id: "report_daily", title: "Daily" },
+      { id: "report_weekly", title: "Weekly" },
+      { id: "report_monthly", title: "Monthly" }
+    ]
+  );
+}
+
+async function sendBranchReport(to, branch, period) {
+  try {
+    const reportOrders = await getOrders(branch, period, orders);
+    const pdf = await createReportPdf(branch, period, reportOrders);
+    const filename = `juljones-${branch.toLowerCase().replace(/\s+/g, "-")}-${period}.pdf`;
+
+    await sendWhatsAppText(to,
+      `📊 ${period[0].toUpperCase() + period.slice(1)} report for ${branch}: ${reportOrders.length} order(s).`
+    );
+    return sendWhatsAppDocument(to, pdf, filename, `${branch} ${period} order report`);
+  } catch (error) {
+    console.error("REPORT ERROR:", error.response?.data || error.message);
+    return sendWhatsAppText(to,
+      "❌ I could not generate the report right now. Please try again in a moment."
+    );
+  }
+}
+
 async function handleText(from, text) {
   const input = String(text || "").trim();
   const lower = input.toLowerCase();
+  const branch = getBranchForPhone(from);
+
+  if (branch && lower === "report") return showReportOptions(from, branch);
+
+  const session = getSession(from);
+  if (branch && session.step === "REPORT_PERIOD" && ["daily", "weekly", "monthly"].includes(lower)) {
+    session.step = "WELCOME";
+    return sendBranchReport(from, branch, lower);
+  }
 
   if (["hi","hello","hey","start","menu"].includes(lower)) {
     resetSession(from);
@@ -537,8 +612,6 @@ async function handleText(from, text) {
       "🔄 Your current order has been cancelled.\n\nSend *hi* to start a new order."
     );
   }
-
-  const session = getSession(from);
 
   if (session.step === "ADDRESS") {
     session.address = input;
@@ -560,6 +633,16 @@ async function handleCustomerInteractive(from, message) {
   if (!id) return;
 
   const session = getSession(from);
+
+  if (id.startsWith("report_")) {
+    const period = id.replace("report_", "");
+    const branch = getBranchForPhone(from);
+    if (branch && session.step === "REPORT_PERIOD" && ["daily", "weekly", "monthly"].includes(period)) {
+      session.step = "WELCOME";
+      return sendBranchReport(from, branch, period);
+    }
+    return;
+  }
 
   /*-- BRANCH --*/
   if (id.startsWith("branch_")) {
@@ -786,7 +869,8 @@ async function placeCustomerOrder(from, session) {
     createdAt:     new Date().toISOString()
   };
 
-  orders.set(order.id, order);
+  orders.set(`${order.id}-${Date.now()}-${Math.random()}`, order);
+  saveOrder(order).catch(error => console.error("SUPABASE ORDER SAVE ERROR:", error.message));
 
   const branchSent = await sendOrderToBranch(order);
   if (!branchSent) {
@@ -825,7 +909,7 @@ We will notify you when your food is ready. ❤️`
  STAFF ORDER STATUS
 --------------------------------------------------------------------------*/
 async function handleStaffAction(from, action, orderId) {
-  const order = orders.get(orderId);
+  const order = Array.from(orders.values()).find(item => item.id === orderId);
   if (!order) return sendWhatsAppText(from, `❌ Order ${orderId} was not found.`);
 
   if (action === "prepare") {
