@@ -814,7 +814,8 @@ async function placeCustomerOrder(from, session) {
 🆔 Order: ${order.id}
 📍 Branch: ${order.branch}
 🍽️ Food: ${order.food} 
-${chickenLine}${soupLine}
+${chickenLine}
+${soupLine}
 ${order.proteinSummary}
 💵 Total: ${money(order.total)}
 🚚 Method: ${order.fulfillment === "pickup" ? "Pick Up" : "Delivery — Pay on Delivery"}  ${order.fulfillment === "delivery" ? `\n📍 Address:\n${order.address}` : ""}
