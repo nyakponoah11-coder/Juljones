@@ -382,7 +382,7 @@ function calculateTotal(session) {
 --------------------------------------------------------------------------*/
 function proteinSummary(session) {
   const catalog = getCatalogForSession(session);
-  if (!catalog || !session.proteins.length) return "No extra protein/add-ons";
+  if (!catalog || !session.proteins.length) return "";
 
   const counts = {};
   session.proteins.forEach(itemId => {
@@ -418,12 +418,13 @@ function buildOrderSummary(session) {
   const basePrice = getBaseFoodPrice(session);
   const soupLine = session.soup ? `🥣 Soup: ${SOUPS[session.soup]?.name || session.soup}\n` : "";
   const chickenLine = session.includedChicken ? `🍗 Includes ${session.includedChicken} chicken\n` : "";
+  const extras = `${chickenLine}${soupLine}${proteinSummary(session)}`;
   return `🛍️ *${STORE_NAME.toUpperCase()} ORDER*
 
 📍 Branch: ${session.branch}
 🍽️ Food: ${session.food}
 💰 Food amount: ${money(basePrice)}
-${chickenLine}${soupLine}${proteinSummary(session)}
+${extras}${extras ? "\n" : ""}
 ━━━━━━━━━━━━━━
 
 💵 *TOTAL: ${money(calculateTotal(session))}*
@@ -799,6 +800,7 @@ async function placeCustomerOrder(from, session) {
   const addressLine = order.fulfillment === "delivery"
     ? `\n📍 Address: ${order.address}`
     : "";
+  const extras = `${chickenLine}${soupLine}${order.proteinSummary}`;
 
   await sendWhatsAppText(from,
     `🎉 *ORDER PLACED SUCCESSFULLY!*
@@ -806,7 +808,7 @@ async function placeCustomerOrder(from, session) {
 🆔 Order: ${order.id}
 📍 Branch: ${order.branch}
 🍽️ Food: ${order.food}
-${chickenLine}${soupLine}${order.proteinSummary}
+${extras}${extras ? "\n" : ""}
 💵 Total: ${money(order.total)}
 🚚 Method: ${order.fulfillment === "pickup" ? "Pick Up" : "Delivery — Pay on Delivery"}${addressLine}
 ━━━━━━━━━━━━━━
