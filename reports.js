@@ -93,6 +93,10 @@ function money(value) {
   return `GHS ${Number(value || 0).toFixed(2)}`;
 }
 
+function pdfSafeText(value) {
+  return String(value || "").replace(/[^\x20-\x7E]/g, "");
+}
+
 function drawTableHeader(doc, columns, y) {
   doc.save();
   doc.rect(40, y, 515, 24).fill("#17324D");
@@ -112,11 +116,12 @@ function createReportPdf(branch, period, orders) {
     const total = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
     const average = orders.length ? total / orders.length : 0;
     const columns = [
-      { label: "ORDER ID", x: 40, width: 96 },
-      { label: "TIME", x: 136, width: 72 },
-      { label: "ORDER DETAILS", x: 208, width: 183 },
-      { label: "METHOD", x: 391, width: 86 },
-      { label: "TOTAL", x: 477, width: 78 }
+      { label: "ORDER ID", x: 40, width: 82 },
+      { label: "TIME", x: 122, width: 52 },
+      { label: "CUSTOMER", x: 174, width: 90 },
+      { label: "ORDER DETAILS", x: 264, width: 160 },
+      { label: "METHOD", x: 424, width: 65 },
+      { label: "TOTAL", x: 489, width: 66 }
     ];
 
     doc.rect(0, 0, 595, 108).fill("#17324D");
@@ -147,11 +152,12 @@ function createReportPdf(branch, period, orders) {
       doc.fillColor("#6B7785").font("Helvetica").fontSize(10).text("No orders were placed during this period.", 47, 330);
     } else {
       orders.forEach((order, index) => {
-        const details = [order.food];
-        if (order.soup) details.push(`Soup: ${order.soup}`);
-        if (order.proteinSummary) details.push(order.proteinSummary.replace(/[\r\n]+/g, ", "));
+        const details = [pdfSafeText(order.food)];
+        if (order.soup) details.push(`Soup: ${pdfSafeText(order.soup)}`);
+        if (order.proteinSummary) details.push(pdfSafeText(order.proteinSummary).replace(/[\r\n]+/g, ", "));
         const detailText = details.join(" | ");
-        const rowHeight = Math.max(34, doc.heightOfString(detailText, { width: 169 }) + 16);
+        const customer = pdfSafeText(order.customerPhone || order.customer_phone || "-");
+        const rowHeight = Math.max(34, doc.heightOfString(detailText, { width: 146 }) + 16);
 
         if (doc.y + rowHeight > 760) {
           doc.addPage();
@@ -161,11 +167,12 @@ function createReportPdf(branch, period, orders) {
 
         const y = doc.y;
         if (index % 2 === 0) doc.rect(40, y, 515, rowHeight).fill("#F1F5F8");
-        doc.fillColor("#253B53").font("Helvetica-Bold").fontSize(8).text(order.id, 47, y + 10, { width: 82 });
-        doc.font("Helvetica").text(new Date(order.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }), 143, y + 10, { width: 58 });
-        doc.text(detailText, 215, y + 8, { width: 169, lineGap: 2 });
-        doc.text(order.fulfillment === "pickup" ? "Pick up" : "Delivery", 398, y + 10, { width: 72 });
-        doc.font("Helvetica-Bold").text(money(order.total), 484, y + 10, { width: 64, align: "right" });
+        doc.fillColor("#253B53").font("Helvetica-Bold").fontSize(8).text(pdfSafeText(order.id), 47, y + 10, { width: 68 });
+        doc.font("Helvetica").text(new Date(order.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }), 129, y + 10, { width: 38 });
+        doc.text(customer, 181, y + 10, { width: 76 });
+        doc.text(detailText, 271, y + 8, { width: 146, lineGap: 2 });
+        doc.text(order.fulfillment === "pickup" ? "Pick up" : "Delivery", 431, y + 10, { width: 51 });
+        doc.font("Helvetica-Bold").text(money(order.total), 496, y + 10, { width: 52, align: "right" });
         doc.y = y + rowHeight;
       });
     }
